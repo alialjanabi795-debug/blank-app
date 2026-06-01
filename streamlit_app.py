@@ -1,23 +1,27 @@
 import streamlit as st
-import requests
+
+# قاعدة بيانات محلية (تم إدراج القائمة التي زودتني بها)
+JAPAN_BINS = {
+    "377783": "American Express Japan",
+    "453450": "Visa Credit",
+    "454153": "Visa Credit",
+    "454294": "Visa Credit",
+    "489784": "Visa Credit",
+    "490714": "CITI CARDS JAPAN (Classic)",
+    "490715": "CITI CARDS JAPAN (Gold)",
+    "498001": "Visa Credit",
+    "520867": "Mastercard Credit",
+    "525013": "Mastercard Credit",
+    "530232": "Mastercard Credit",
+    "533491": "Mastercard Credit"
+}
 
 st.title("محول بيانات السجلات")
 st.title("برمجة: علي يحيى")
 
 input_data = st.text_area("ألصق البيانات هنا:", height=200)
 
-def get_bank_info(bin_number):
-    try:
-        # استخدام API عام لجلب معلومات البنك
-        response = requests.get(f"https://lookup.binlist.net/{bin_number}", timeout=5)
-        if response.status_code == 200:
-            data = response.json()
-            return data.get('bank', {}).get('name', 'غير معروف'), data.get('country', {}).get('name', 'غير معروف')
-    except:
-        return "خطأ في الاتصال", "غير معروف"
-    return "غير معروف", "غير معروف"
-
-if st.button("تحويل وتصنيف ذكي"):
+if st.button("تحويل وتصنيف"):
     if input_data:
         lines = input_data.strip().split('\n')
         all_results = []
@@ -36,10 +40,9 @@ if st.button("تحويل وتصنيف ذكي"):
                     formatted_line = f"{card_num}|{month}|{year}|{cvv}"
                     all_results.append(formatted_line)
                     
-                    # استعلام مباشر عن البنك
-                    bank_name, country = get_bank_info(card_num[:6])
-                    
-                    if country == "Japan":
+                    # الفحص يعتمد الآن فقط على القائمة المحلية
+                    bank_name = JAPAN_BINS.get(card_num[:6])
+                    if bank_name:
                         japanese_results.append(f"{formatted_line} | {bank_name}")
                         
                 except:
@@ -48,8 +51,8 @@ if st.button("تحويل وتصنيف ذكي"):
         st.subheader(f"النتائج الكاملة ({len(all_results)}):")
         st.code("\n".join(all_results))
         
-        st.subheader(f"البنوك اليابانية فقط ({len(japanese_results)}):")
+        st.subheader(f"البنوك اليابانية المكتشفة ({len(japanese_results)}):")
         if japanese_results:
             st.code("\n".join(japanese_results))
         else:
-            st.info("لم يتم العثور على سجلات يابانية.")
+            st.info("لم يتم العثور على سجلات تطابق القائمة المحلية.")
